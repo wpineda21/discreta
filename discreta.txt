@@ -1,0 +1,332 @@
+#include <iostream>
+#include <unistd.h>
+#include <time.h>
+#include <stdlib.h>
+//#include <windows.h>
+
+using namespace std;
+
+struct Maletin{
+    int Maletines[5][5];
+    int Cantidades[5][5];
+}; typedef struct Maletin M;
+
+//Repartidor de cantidades
+int Aleatorio(int valor){
+    return 0+rand()% valor;
+}
+
+//Verificador de cantidades repartidas
+bool Repetido(int Numero,int Mat[5][5],int fil,int col){
+    for(int i=0;i<fil;i++)
+        for(int j=0;j<col;j++)
+            if(Numero==Mat[i][j])
+                return true;
+    return false;
+}
+
+//Funcion que crea los maletines para elegir
+void Creacion_M(M *Matriz,M *aux){
+    int cont=1, AuxFil=0, AuxCol=0, Numero=0;
+    int Aux_Cant [5][5]={{1,5,10,25,40},{50,75,100,275,400},{500,750,1000,5000,10000},{25000,50000,75000,100000,200000},{300000,400000,500000,750000,1000000}};
+    
+    //Creando la Matriz
+    for(int i=0; i<5; i++)
+        for(int j=0; j<5; j++){
+            Matriz->Maletines[i][j]=cont;
+            aux->Maletines[i][j]=cont;
+            cont++;
+        }
+    
+    //Repartiendo las cantidades aleatorias a una nueva Matriz
+    for(int i=0;i<5;i++)
+        for(int j=0;j<5;j++){
+            AuxFil=Aleatorio(5);
+            AuxCol=Aleatorio(5);
+            Numero=Aux_Cant[AuxFil][AuxCol];
+            
+            while(Repetido(Numero,Matriz->Cantidades,5,5)){
+                AuxFil=Aleatorio(5);
+                AuxCol=Aleatorio(5);
+                Numero=Aux_Cant[AuxFil][AuxCol];
+            }
+            Matriz->Cantidades[i][j]=Numero;
+        }
+    
+    //Mostrando las cantidades
+    /*cout<<endl<<endl;
+     for(int i=0;i<5;i++){
+     for(int j=0;j<5;j++)
+     cout<<"["<<Matriz->Cantidades[i][j]<<"]";
+     cout<<endl;
+     }
+     cout<<endl;*/
+}
+
+
+int Banquero(M *Matriz, int Mi_Maletin){
+    int Suma=0, cont=0;
+    for(int i=0; i<5; i++)
+        for(int j=0; j<5; j++)
+            if(Matriz->Maletines[i][j]!=0 && Matriz->Maletines[i][j]!=Mi_Maletin){
+                Suma+=Matriz->Cantidades[i][j];
+                cont++;
+            }
+    return ((Suma/cont)*0.1);
+}
+
+bool Escogido(M *Matriz,M *aux, int op){
+    
+    for(int i=0; i<5; i++)
+        for(int j=0; j<5; j++)
+            if(op==aux->Maletines[i][j]&&Matriz->Cantidades[i][j]==0)
+                return true;
+    return false;
+}
+
+int Mediana(M *m,int Mi_Maletin){
+    int contador=0,aux=0;
+    for(int i=0; i<5; i++)
+        for(int j=0; j<5; j++)
+            if(m->Maletines[i][j]!=0&&m->Maletines[i][j]!=Mi_Maletin)
+                contador++;       //Conociendo cuantos valores actuales existen
+    
+    int Datos[contador];
+    contador=0;  //se reinicia la variable para alojarlos
+    for(int i=0; i<5; i++)
+        for(int j=0; j<5; j++)
+            if(m->Maletines[i][j]!=0){
+                Datos[contador]=m->Cantidades[i][j]; //guardando los valores en el arreglo
+                contador++;
+            }
+    //Metodo burbuja para el ordenamiento de los datos
+    for(int i=0;i<contador;i++)
+        for(int j=0;j<contador-1;j++)
+            if(Datos[j]>Datos[j+1]){
+                aux= Datos[j];
+                Datos[j]=Datos[j+1];
+                Datos[j+1]=aux;
+            }
+    //Conociendo la mediana
+    if(contador%2==0){ //Caso en que el total de datos sea un numero par
+        aux=(Datos[(contador/2)-1]+Datos[(contador/2)]);
+        float mediana=aux*0.5;
+        return mediana;
+        
+    } else{  //Caso en que la mediana es impar
+        aux=(contador+1)/2;
+        int mediana=Datos[aux-1];
+        return mediana;
+    }
+}
+
+void RangoOfertas(M *m, int mediana, int ronda){
+    float buenas=0,total=25;
+    for(int i=0; i<5; i++)
+        for(int j=0; j<5; j++){
+            if(m->Cantidades[i][j]!=0&&m->Cantidades[i][j]>mediana)
+                buenas++; //Utilizada para conocer los valores mayores a la mediana
+            if(m->Maletines[i][j]==0)
+                total--; //Cuenta los maletines restantes
+        }
+    cout<<"Probabilidad de buena oferta: "<<(buenas/total)*100<<"%\n"; //La probabilidad se basa en los mejores maletines entre el total
+}
+
+void MostrarCantidades(M *Matriz){
+    int aux=0, Datos[25], cont=0;
+    
+    for(int i=0; i<5; i++){
+        for(int j=0; j<5; j++){
+            Datos[cont]=Matriz->Cantidades[i][j];
+            cont++;
+        }
+    }
+    
+    //Ordenando la Matriz de las cantidades
+    for(int i=0; i<25; i++){
+        for(int j=0; j<24; j++){
+            if(Datos[j]>Datos[j+1]){
+                aux=Datos[j];
+                Datos[j]=Datos[j+1];
+                Datos[j+1]=aux;
+            }
+        }
+    }
+    
+    //Mostrando los Maletines restantes
+    cout<<"\nCantidades por jugar:\n";
+    for(int i=0; i<25; i++){
+        if(Datos[i]!=0){
+            cout<<"$"<<Datos[i]<<endl;
+        }
+    }
+}
+
+void Rondas(M *Matriz,M *Maux,int Mi_Maletin){
+    char x;
+    int cont=6, opcion=0, rondas=8, aux=1, aux2=6;
+    
+    while(rondas>0){
+        int mediana=Mediana(Matriz,Mi_Maletin);
+        
+        cout<<"\n--------RONDA "<<aux<<"--------"<<endl;
+        MostrarCantidades(Matriz);
+        cout<<"\nA continuacion, elige "<<aux2<<" maletines:"<<endl<<endl;
+        
+        for(int i=0; i<5; i++){
+            for(int j=0; j<5; j++){
+                if(Matriz->Maletines[i][j]!=0){
+                    cout<<"|"<<Matriz->Maletines[i][j]<<"|";
+                }
+                else cout<<"|X|";
+            }
+            cout<<endl;
+        }cout<<endl;
+        
+        do{
+            cout<<"\nSelecciona un maletin\n---> ";
+            cin>>opcion;
+            
+            while(opcion>26||opcion<1||opcion==Mi_Maletin||Escogido(Matriz,Maux,opcion)){
+                if(opcion==Mi_Maletin)
+                    cout<<"Este es tu maletin\n\n";
+                else if(Escogido(Matriz,Maux,opcion))
+                    cout<<"Ya escojiste este maletin\n\n";
+                else
+                    cout<<"--El maletin no existe--\n\n";
+                
+                cout<<"\nSelecciona un maletin\n---> ";
+                cin>>opcion;
+            }
+            
+            for(int i=0; i<5; i++)
+                for(int j=0; j<5; j++)
+                    if(opcion==Matriz->Maletines[i][j]){
+                        cout<<"El maletin contiene: [$"<<Matriz->Cantidades[i][j]<<"]";
+                        Matriz->Cantidades[i][j]=0;
+                        Matriz->Maletines[i][j]=0;
+                    }
+            cout<<endl;
+            RangoOfertas(Matriz,mediana,rondas);
+            cout<<endl;
+            cont--;
+            
+        }while(cont>0);
+        
+        //RangoOfertas(Matriz, mediana,rondas);
+        int Oferta=Banquero(Matriz,Mi_Maletin);
+        cout<<"EL BANQUERO ESTA LLAMANDO";
+        cout<<".";
+        cout<<".";
+        cout<<"."<<endl;
+        cout<<"\nEl banquero te ofrece $"<<Oferta<<" por tu maletin"<<endl;
+        cout<<"Aceptas? (S/N)\n---> ";
+        cin>>x;
+        if(x=='s'||x=='S'){
+            cout<<"\nFELICIDADES!!\nHas ganado $"<<Oferta;
+            exit(-1);
+        }
+        aux++;
+        if(aux2!=1)
+            aux2--;
+        cont=aux2;
+        rondas--;
+    }
+    
+    cout<<"\n--------RONDA FINAL--------"<<endl;
+    MostrarCantidades(Matriz);
+    cout<<endl;
+    for(int i=0; i<5; i++){
+        for(int j=0; j<5; j++){
+            if(Matriz->Maletines[i][j]!=0){
+                cout<<"|"<<Matriz->Maletines[i][j]<<"|";
+            }
+            else cout<<"|X|";
+        }
+        cout<<endl;
+    }cout<<endl;
+    
+    cout<<"\nTan solo queda tu maletin y y el maletin ";
+    for(int i=0; i<5; i++){
+        for(int j=0; j<5; j++){
+            if(Matriz->Maletines[i][j]!=0 && Matriz->Maletines[i][j]!=Mi_Maletin)
+                cout<<Matriz->Maletines[i][j]<<endl;
+        }
+    }
+    
+    cout<<"La cantidad que has ganado esta en tu maletin, pero tu decides cual abrir primero"<<endl;
+    cout<<"\nCual deseas abrir?\n\t1)Mi Maletin\n\t2)El otro\n--> ";
+    int op=0;
+    cin>>op;
+    
+    switch(op){
+        case 1:
+            for(int i=0; i<5; i++)
+                for(int j=0; j<5; j++)
+                    if(Mi_Maletin==Matriz->Maletines[i][j]){
+                        cout<<"\nTu Maletin tiene la cantidad de: $"<<Matriz->Cantidades[i][j];
+                        cout<<"\nHas ganado $"<<Matriz->Cantidades[i][j]<<"!!!";
+                        cout<<endl<<endl;
+                    }
+            
+            for(int i=0; i<5; i++)
+                for(int j=0; j<5; j++)
+                    if(Matriz->Maletines[i][j]!=0 && Matriz->Maletines[i][j]!=Mi_Maletin){
+                        cout<<"El maletin "<<Matriz->Maletines[i][j]<<" tenia la cantidad de $"<<Matriz->Cantidades[i][j]<<endl;
+                    }
+            
+            cout<<"\nFIN DEL JUEGO!";
+            break;
+        case 2:
+            for(int i=0; i<5; i++)
+                for(int j=0; j<5; j++)
+                    if(Matriz->Maletines[i][j]!=0 && Matriz->Maletines[i][j]!=Mi_Maletin){
+                        cout<<"\nEl maletin "<<Matriz->Maletines[i][j]<<" tenia la cantidad de $"<<Matriz->Cantidades[i][j]<<endl;
+                    }
+            
+            for(int i=0; i<5; i++)
+                for(int j=0; j<5; j++)
+                    if(Mi_Maletin==Matriz->Maletines[i][j]){
+                        cout<<"Tu Maletin tiene la cantidad de: $"<<Matriz->Cantidades[i][j];
+                        cout<<"\nHas ganado $"<<Matriz->Cantidades[i][j]<<"!!!";
+                        cout<<endl<<endl;
+                    }
+            
+            cout<<"\nFIN DEL JUEGO!";
+            break;
+            }
+}
+
+int main(){
+    M Maletin,Maletin_aux;
+    srand(time(NULL));
+    int Mi_Maletin=0;
+    
+    cout<<"Bienvenidos a TRATO HECHO!"<<endl<<endl;
+    cout<<"Te sientes con suerte?\n¡Son 25 maletines con el premio mayor de 1 Millon de Dolares!\n\nA jugar!!!!"<<endl<<endl;
+    
+    cout<<"Escoge tu maletin: "<<endl<<endl;
+    Creacion_M(&Maletin,&Maletin_aux);
+    for(int i=0; i<5; i++){
+        for(int j=0; j<5; j++){
+            cout<<"|"<<Maletin.Maletines[i][j]<<"|";
+        }
+        cout<<endl;
+    }
+    cout<<endl<<"Tu maletin: "; cin>>Mi_Maletin;
+    
+    //Verificando que mi maletin exista
+    while(Mi_Maletin>25||Mi_Maletin<1){
+        cout<<"--El maletin no existe--"<<endl<<endl;
+        cout<<"Escoge tu maletin: ";
+        cin>>Mi_Maletin;
+    }
+    
+    cout<<"\n\nHas escogido el maletin "<<Mi_Maletin;cout<<endl<<endl;
+    
+    Rondas(&Maletin,&Maletin_aux,Mi_Maletin);
+    
+    return 0;
+}
+
+
